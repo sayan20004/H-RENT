@@ -1,4 +1,3 @@
-
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema(
@@ -19,8 +18,16 @@ const UserSchema = new mongoose.Schema(
     googleId: {
       type: String,
       unique: true,
-      sparse: true, 
+      sparse: true,
     },
+    // --- ADDED THIS FIELD ---
+    userType: {
+      type: String,
+      required: true,
+      enum: ['user', 'owner'], // Restricts to only these two values
+      default: 'user',
+    },
+    // --- END OF ADDED FIELD ---
     isVerified: {
       type: Boolean,
       default: false,
