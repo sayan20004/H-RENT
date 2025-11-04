@@ -103,13 +103,26 @@ exports.updateRentalStatus = async (req, res) => {
     }
 
     if (isOwner) {
-      if (status === 'accepted' || status === 'denied') {
-        rental.status = status;
-        if (status === 'accepted') {
-          await Property.findByIdAndUpdate(rental.property, { isAvailable: false });
+      if (rental.status === 'pending') {
+        if (status === 'accepted' || status === 'denied') {
+          rental.status = status;
+          if (status === 'accepted') {
+            await Property.findByIdAndUpdate(rental.property, { isAvailable: false });
+          }
+        } else {
+          return res.status(400).json({ message: 'Invalid status update for owner' });
         }
+      } else if (rental.status === 'cancellationRequested') {
+         if (status === 'cancelled') {
+            rental.status = 'cancelled';
+            await Property.findByIdAndUpdate(rental.property, { isAvailable: true });
+         } else if (status === 'accepted') {
+            rental.status = 'accepted';
+         } else {
+            return res.status(400).json({ message: 'Invalid status update for cancellation' });
+         }
       } else {
-        return res.status(400).json({ message: 'Invalid status update for owner' });
+        return res.status(400).json({ message: 'No action available for this rental state' });
       }
     }
 
@@ -127,7 +140,6 @@ exports.updateRentalStatus = async (req, res) => {
     }
 
     let updatedRental = await rental.save();
-
     updatedRental = await updatedRental.populate(populateRental);
     
     res.status(200).json({ success: true, rental: updatedRental });
