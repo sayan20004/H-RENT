@@ -9,13 +9,10 @@ const protect = async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
-      // Get token from header
       token = req.headers.authorization.split(' ')[1];
 
-      // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from the token
       req.user = await User.findById(decoded.id).select('-otp -otpExpires');
 
       if (!req.user) {
@@ -34,4 +31,12 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const isOwner = (req, res, next) => {
+  if (req.user && req.user.userType === 'owner') {
+    next();
+  } else {
+    res.status(401).json({ message: 'Not authorized as an owner' });
+  }
+};
+
+module.exports = { protect, isOwner };

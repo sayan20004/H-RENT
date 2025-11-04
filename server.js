@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
@@ -13,7 +12,8 @@ app.use(express.json());
 app.use(cors());
 
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/user', require('./routes/user')); 
+app.use('/api/user', require('./routes/user'));
+app.use('/api/properties', require('./routes/property'));
 
 app.get('/', (req, res) => {
   res.send('API is running...');
