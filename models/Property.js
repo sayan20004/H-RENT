@@ -20,12 +20,10 @@ const PropertySchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add an address'],
     },
-    images: [
-      {
-        type: String,
-        required: true,
-      },
-    ],
+    images: {
+      type: [String],
+      required: [true, 'Please add at least one image URL'],
+    },
     price: {
       type: Number,
       required: [true, 'Please add a price'],

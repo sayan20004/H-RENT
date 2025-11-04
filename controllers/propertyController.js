@@ -12,6 +12,10 @@ exports.createProperty = async (req, res) => {
     allowBargaining,
   } = req.body;
 
+  if (!images || images.length === 0 || images[0] === "") {
+     return res.status(400).json({ message: 'Please add at least one image URL' });
+  }
+
   try {
     const property = new Property({
       owner: req.user._id,
@@ -24,17 +28,29 @@ exports.createProperty = async (req, res) => {
       allowBargaining,
     });
 
-    const createdProperty = await property.save();
+    let createdProperty = await property.save();
+
+    createdProperty = await createdProperty.populate(
+      'owner',
+      'firstName lastName email'
+    );
+
     res.status(201).json({ success: true, property: createdProperty });
   } catch (error) {
     console.error(error);
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({ message: messages.join(', ') });
+    }
     res.status(500).json({ message: 'Server error while creating property' });
   }
 };
 
 exports.getMyProperties = async (req, res) => {
   try {
-    const properties = await Property.find({ owner: req.user._id });
+    const properties = await Property.find({ owner: req.user._id })
+      .populate('owner', 'firstName lastName email');
+      
     res.status(200).json({ success: true, properties });
   } catch (error) {
     console.error(error);
@@ -68,7 +84,11 @@ exports.updateProperty = async (req, res) => {
     property.title = title || property.title;
     property.description = description || property.description;
     property.address = address || property.address;
-    property.images = images || property.images;
+    
+    if (images && images.length > 0 && images[0] !== "") {
+       property.images = images;
+    }
+
     property.price = price || property.price;
     property.pricingFrequency = pricingFrequency || property.pricingFrequency;
     
@@ -79,10 +99,20 @@ exports.updateProperty = async (req, res) => {
       property.isAvailable = isAvailable;
     }
 
-    const updatedProperty = await property.save();
+    let updatedProperty = await property.save();
+
+    updatedProperty = await updatedProperty.populate(
+      'owner',
+      'firstName lastName email'
+    );
+
     res.status(200).json({ success: true, property: updatedProperty });
   } catch (error) {
     console.error(error);
+     if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({ message: messages.join(', ') });
+    }
     res.status(500).json({ message: 'Server error while updating property' });
   }
 };
