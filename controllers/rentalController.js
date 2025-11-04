@@ -1,6 +1,21 @@
 const Rental = require('../models/Rental');
 const Property = require('../models/Property');
 
+const populateRental = [
+  {
+    path: 'property',
+    select: 'title images price pricingFrequency _id',
+  },
+  {
+    path: 'tenant',
+    select: 'firstName lastName email _id',
+  },
+  {
+    path: 'owner',
+    select: 'firstName lastName email _id',
+  },
+];
+
 exports.createRentalRequest = async (req, res) => {
   const { propertyId } = req.body;
 
@@ -32,9 +47,13 @@ exports.createRentalRequest = async (req, res) => {
       owner: property.owner,
     });
 
-    const createdRental = await rental.save();
+    let createdRental = await rental.save();
+    
+    createdRental = await createdRental.populate(populateRental);
+
     res.status(201).json({ success: true, rental: createdRental });
-  } catch (error) {
+  } catch (error)
+ {
     console.error(error);
     res.status(500).json({ message: 'Server error while creating rental request' });
   }
@@ -43,11 +62,7 @@ exports.createRentalRequest = async (req, res) => {
 exports.getMyRentalRequests = async (req, res) => {
   try {
     const rentals = await Rental.find({ tenant: req.user._id })
-      .populate({
-        path: 'property',
-        select: 'title images price pricingFrequency',
-      })
-      .populate('owner', 'firstName lastName')
+      .populate(populateRental)
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, rentals });
@@ -60,11 +75,7 @@ exports.getMyRentalRequests = async (req, res) => {
 exports.getIncomingRentalRequests = async (req, res) => {
   try {
     const rentals = await Rental.find({ owner: req.user._id })
-      .populate({
-        path: 'property',
-        select: 'title images price pricingFrequency',
-      })
-      .populate('tenant', 'firstName lastName email')
+      .populate(populateRental)
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, rentals });
@@ -115,7 +126,10 @@ exports.updateRentalStatus = async (req, res) => {
       }
     }
 
-    const updatedRental = await rental.save();
+    let updatedRental = await rental.save();
+
+    updatedRental = await updatedRental.populate(populateRental);
+    
     res.status(200).json({ success: true, rental: updatedRental });
   } catch (error) {
     console.error(error);
