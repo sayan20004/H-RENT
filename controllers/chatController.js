@@ -18,6 +18,17 @@ const populateConversation = [
   },
 ];
 
+const populateMessage = [
+  {
+    path: 'sender',
+    select: 'firstName lastName _id',
+  },
+  {
+    path: 'reactions.user',
+    select: 'firstName _id',
+  },
+];
+
 exports.getOrCreateConversation = async (req, res) => {
   const { rentalId } = req.body;
   const myId = req.user._id;
@@ -74,7 +85,7 @@ exports.getMessagesForConversation = async (req, res) => {
 
   try {
     const messages = await Message.find({ conversation: conversationId })
-      .populate('sender', 'firstName lastName _id')
+      .populate(populateMessage)
       .sort({ createdAt: 'asc' });
 
     res.status(200).json({ success: true, messages });
@@ -112,9 +123,76 @@ exports.sendMessage = async (req, res) => {
       updatedAt: Date.now(),
     });
     
-    const populatedMessage = await message.populate('sender', 'firstName lastName _id');
+    const populatedMessage = await message.populate(populateMessage);
 
     res.status(201).json({ success: true, message: populatedMessage });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.editMessage = async (req, res) => {
+  const { messageId } = req.params;
+  const { text } = req.body;
+  const userId = req.user._id;
+
+  try {
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+    if (message.sender.toString() !== userId.toString()) {
+      return res.status(401).json({ message: 'Not authorized to edit' });
+    }
+
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    if (message.createdAt < twoMinutesAgo) {
+      return res.status(400).json({ message: 'Edit time limit (2 min) exceeded' });
+    }
+
+    message.text = text;
+    message.isEdited = true;
+    await message.save();
+    
+    const populatedMessage = await message.populate(populateMessage);
+    res.status(200).json({ success: true, message: populatedMessage });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.reactToMessage = async (req, res) => {
+  const { messageId } = req.params;
+  const { emoji } = req.body;
+  const userId = req.user._id;
+
+  try {
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    const existingReactionIndex = message.reactions.findIndex(
+      (r) => r.user.toString() === userId.toString()
+    );
+
+    if (existingReactionIndex > -1) {
+      if (message.reactions[existingReactionIndex].emoji === emoji) {
+        message.reactions.splice(existingReactionIndex, 1);
+      } else {
+        message.reactions[existingReactionIndex].emoji = emoji;
+      }
+    } else {
+      message.reactions.push({ user: userId, emoji: emoji });
+    }
+
+    await message.save();
+    const populatedMessage = await message.populate(populateMessage);
+    res.status(200).json({ success: true, message: populatedMessage });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

@@ -1,5 +1,17 @@
 const mongoose = require('mongoose');
 
+const ReactionSchema = new mongoose.Schema({
+  emoji: {
+    type: String,
+    required: true,
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+});
+
 const MessageSchema = new mongoose.Schema(
   {
     conversation: {
@@ -21,6 +33,11 @@ const MessageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    isEdited: {
+      type: Boolean,
+      default: false,
+    },
+    reactions: [ReactionSchema],
   },
   {
     timestamps: true,
