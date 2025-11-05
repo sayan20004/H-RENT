@@ -9,7 +9,7 @@ const populateConversation = [
     select: 'property',
     populate: {
       path: 'property',
-      select: 'title',
+      select: 'title images price pricingFrequency _id',
     },
   },
   {
@@ -74,7 +74,7 @@ exports.getMessagesForConversation = async (req, res) => {
 
   try {
     const messages = await Message.find({ conversation: conversationId })
-      .populate('sender', 'firstName _id')
+      .populate('sender', 'firstName lastName _id')
       .sort({ createdAt: 'asc' });
 
     res.status(200).json({ success: true, messages });
@@ -112,7 +112,7 @@ exports.sendMessage = async (req, res) => {
       updatedAt: Date.now(),
     });
     
-    const populatedMessage = await message.populate('sender', 'firstName _id');
+    const populatedMessage = await message.populate('sender', 'firstName lastName _id');
 
     res.status(201).json({ success: true, message: populatedMessage });
   } catch (error) {
