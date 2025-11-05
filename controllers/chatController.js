@@ -25,7 +25,7 @@ const populateMessage = [
   },
   {
     path: 'reactions.user',
-    select: 'firstName _id',
+    select: 'firstName lastName _id',
   },
 ];
 
