@@ -5,10 +5,9 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const sendEmail = async (options) => {
   const msg = {
     to: options.email,
-    from: process.env.SENDGRID_VERIFIED_SENDER, // Your verified sender email
+    from: process.env.SENDGRID_VERIFIED_SENDER, 
     subject: options.subject,
     text: options.message,
-    // html: '<strong>and easy to do anywhere, even with Node.js</strong>',
   };
 
   try {
@@ -17,7 +16,7 @@ const sendEmail = async (options) => {
   } catch (error) {
     console.error('Error sending email:', error);
 
-    // Log more details if available
+
     if (error.response) {
       console.error(error.response.body)
     }

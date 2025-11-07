@@ -9,7 +9,7 @@ const generateToken = (id) => {
 };
 
 exports.sendRegistrationOtp = async (req, res) => {
-  // Add userType
+
   const { firstName, lastName, email, userType } = req.body;
 
   try {
@@ -18,13 +18,13 @@ exports.sendRegistrationOtp = async (req, res) => {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
-    const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); 
+    const otpExpires = Date.now() + 10 * 60 * 1000;
 
     if (user) {
       user.firstName = firstName;
       user.lastName = lastName;
-      user.userType = userType; // <-- ADD THIS
+      user.userType = userType;
       user.otp = otp;
       user.otpExpires = otpExpires;
       await user.save();
@@ -33,7 +33,7 @@ exports.sendRegistrationOtp = async (req, res) => {
         firstName,
         lastName,
         email,
-        userType, // <-- ADD THIS
+        userType,
         otp,
         otpExpires,
       });
@@ -76,8 +76,8 @@ exports.verifyOtpAndRegister = async (req, res) => {
     }
 
     user.isVerified = true;
-    user.otp = undefined; // Clear OTP
-    user.otpExpires = undefined; // Clear expiry
+    user.otp = undefined;
+    user.otpExpires = undefined;
     await user.save();
 
     const token = generateToken(user._id);
@@ -91,7 +91,7 @@ exports.verifyOtpAndRegister = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         isVerified: user.isVerified,
-        userType: user.userType, // <-- ADD THIS
+        userType: user.userType,
       },
     });
   } catch (error) {
@@ -101,10 +101,10 @@ exports.verifyOtpAndRegister = async (req, res) => {
 };
 
 exports.registerOrLoginWithGoogle = async (req, res) => {
-  // Add userType
+
   const { email, firstName, lastName, googleId, userType } = req.body;
 
-  // Add userType to validation
+
   if (!email || !firstName || !lastName || !googleId || !userType) {
     return res.status(400).json({ message: 'All fields are required' });
   }
@@ -115,8 +115,6 @@ exports.registerOrLoginWithGoogle = async (req, res) => {
     if (user) {
       user.firstName = firstName;
       user.lastName = lastName;
-      // Note: You might want to decide if a Google user can change their type
-      // user.userType = userType; // <-- Optionally update type on login
       await user.save();
     } else {
       const userWithEmail = await User.findOne({ email });
@@ -126,14 +124,14 @@ exports.registerOrLoginWithGoogle = async (req, res) => {
         });
       }
 
-      // Create new user
+
       user = await User.create({
         firstName,
         lastName,
         email,
         googleId,
-        userType, // <-- ADD THIS
-        isVerified: true, // Google handles email verification
+        userType, 
+        isVerified: true, 
       });
     }
 
@@ -148,7 +146,7 @@ exports.registerOrLoginWithGoogle = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         isVerified: user.isVerified,
-        userType: user.userType, // <-- ADD THIS
+        userType: user.userType,
       },
     });
   } catch (error) {
@@ -168,8 +166,8 @@ exports.sendLoginOtp = async (req, res) => {
       });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
-    const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = Date.now() + 10 * 60 * 1000;
 
     user.otp = otp;
     user.otpExpires = otpExpires;
@@ -223,7 +221,7 @@ exports.verifyLoginOtp = async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         isVerified: user.isVerified,
-        userType: user.userType, // <-- ADD THIS
+        userType: user.userType,
       },
     });
   } catch (error) {

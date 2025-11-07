@@ -20,14 +20,13 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
-    // --- ADDED THIS FIELD ---
+
     userType: {
       type: String,
       required: true,
-      enum: ['user', 'owner'], // Restricts to only these two values
+      enum: ['user', 'owner'],
       default: 'user',
     },
-    // --- END OF ADDED FIELD ---
     isVerified: {
       type: Boolean,
       default: false,
