@@ -25,7 +25,7 @@ exports.createRentalRequest = async (req, res) => {
       return res.status(404).json({ message: 'Property not found' });
     }
 
-    if (!property.isAvailable) {
+    if (property.status !== 'active') {
       return res.status(400).json({ message: 'Property is not available' });
     }
 
@@ -107,7 +107,7 @@ exports.updateRentalStatus = async (req, res) => {
         if (status === 'accepted' || status === 'denied') {
           rental.status = status;
           if (status === 'accepted') {
-            await Property.findByIdAndUpdate(rental.property, { isAvailable: false });
+            await Property.findByIdAndUpdate(rental.property, { status: 'hidden' });
           }
         } else {
           return res.status(400).json({ message: 'Invalid status update for owner' });
@@ -115,7 +115,7 @@ exports.updateRentalStatus = async (req, res) => {
       } else if (rental.status === 'cancellationRequested') {
          if (status === 'cancelled') {
             rental.status = 'cancelled';
-            await Property.findByIdAndUpdate(rental.property, { isAvailable: true });
+            await Property.findByIdAndUpdate(rental.property, { status: 'active' });
          } else if (status === 'accepted') {
             rental.status = 'accepted';
          } else {
