@@ -26,6 +26,7 @@ exports.createProperty = async (req, res) => {
       price,
       pricingFrequency,
       allowBargaining,
+      status: 'active',
     });
 
     let createdProperty = await property.save();
@@ -48,8 +49,11 @@ exports.createProperty = async (req, res) => {
 
 exports.getMyProperties = async (req, res) => {
   try {
-    const properties = await Property.find({ owner: req.user._id })
-      .populate('owner', 'firstName lastName email');
+    const properties = await Property.find({
+      owner: req.user._id,
+    })
+      .populate('owner', 'firstName lastName email')
+      .sort({ createdAt: -1 });
       
     res.status(200).json({ success: true, properties });
   } catch (error) {
@@ -67,7 +71,7 @@ exports.updateProperty = async (req, res) => {
     price,
     pricingFrequency,
     allowBargaining,
-    isAvailable,
+    status,
   } = req.body;
 
   try {
@@ -80,6 +84,10 @@ exports.updateProperty = async (req, res) => {
     if (property.owner.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: 'Not authorized' });
     }
+    
+    if (property.status === 'deleted') {
+      return res.status(400).json({ message: 'Cannot update a deleted property' });
+    }
 
     property.title = title || property.title;
     property.description = description || property.description;
@@ -91,12 +99,10 @@ exports.updateProperty = async (req, res) => {
 
     property.price = price || property.price;
     property.pricingFrequency = pricingFrequency || property.pricingFrequency;
+    property.status = status || property.status;
     
     if (allowBargaining !== undefined) {
       property.allowBargaining = allowBargaining;
-    }
-    if (isAvailable !== undefined) {
-      property.isAvailable = isAvailable;
     }
 
     let updatedProperty = await property.save();
@@ -128,9 +134,15 @@ exports.deleteProperty = async (req, res) => {
     if (property.owner.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: 'Not authorized' });
     }
+    
+    if (property.status === 'deleted') {
+      return res.status(400).json({ message: 'Property already deleted' });
+    }
 
-    await property.deleteOne();
-    res.status(200).json({ success: true, message: 'Property removed' });
+    property.status = 'deleted';
+    await property.save();
+    
+    res.status(200).json({ success: true, message: 'Property deleted successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error while deleting property' });
@@ -138,11 +150,22 @@ exports.deleteProperty = async (req, res) => {
 };
 
 exports.getAllProperties = async (req, res) => {
+  const { sortBy } = req.query;
+
+  let sortOptions = {};
+  if (sortBy === 'priceAsc') {
+    sortOptions = { price: 1 };
+  } else if (sortBy === 'priceDesc') {
+    sortOptions = { price: -1 };
+  } else {
+    sortOptions = { createdAt: -1 };
+  }
+
   try {
-    const properties = await Property.find({ isAvailable: true }).populate(
-      'owner',
-      'firstName lastName email'
-    );
+    const properties = await Property.find({ status: 'active' })
+      .populate('owner', 'firstName lastName email')
+      .sort(sortOptions);
+      
     res.status(200).json({ success: true, properties });
   } catch (error) {
     console.error(error);
@@ -157,7 +180,7 @@ exports.getPropertyById = async (req, res) => {
       'firstName lastName email'
     );
 
-    if (!property) {
+    if (!property || property.status !== 'active') {
       return res.status(404).json({ message: 'Property not found' });
     }
 

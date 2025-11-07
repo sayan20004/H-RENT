@@ -38,9 +38,11 @@ const PropertySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isAvailable: {
-      type: Boolean,
-      default: true,
+    status: {
+      type: String,
+      required: true,
+      enum: ['active', 'hidden', 'deleted'],
+      default: 'active',
     },
   },
   {
