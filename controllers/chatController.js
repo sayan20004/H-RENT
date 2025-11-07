@@ -1,6 +1,6 @@
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
-const Rental = require('../modelsD/Rental');
+const Rental = require('../models/Rental');
 const User = require('../models/User');
 
 const populateConversation = [
