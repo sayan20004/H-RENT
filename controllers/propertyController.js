@@ -162,7 +162,7 @@ exports.getAllProperties = async (req, res) => {
   }
 
   try {
-    const properties = await Property.find({ status: 'active' })
+    const properties = await Property.find({ status: { $ne: 'deleted' } })
       .populate('owner', 'firstName lastName email')
       .sort(sortOptions);
       
@@ -180,7 +180,7 @@ exports.getPropertyById = async (req, res) => {
       'firstName lastName email'
     );
 
-    if (!property || property.status !== 'active') {
+    if (!property || property.status === 'deleted') {
       return res.status(404).json({ message: 'Property not found' });
     }
 
