@@ -1,6 +1,6 @@
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
-const Rental = require('../models/Rental');
+const Rental = require('../modelsD/Rental');
 const User = require('../models/User');
 
 const populateConversation = [
@@ -97,8 +97,12 @@ exports.getMessagesForConversation = async (req, res) => {
 
 exports.sendMessage = async (req, res) => {
   const { conversationId } = req.params;
-  const { text } = req.body;
+  const { text, imageUrl } = req.body;
   const senderId = req.user._id;
+
+  if (!text && !imageUrl) {
+    return res.status(400).json({ message: 'Message must include text or an image' });
+  }
 
   try {
     const conversation = await Conversation.findById(conversationId);
@@ -115,6 +119,7 @@ exports.sendMessage = async (req, res) => {
       sender: senderId,
       receiver: receiverId,
       text: text,
+      imageUrl: imageUrl,
     });
 
     await message.save();
@@ -144,6 +149,10 @@ exports.editMessage = async (req, res) => {
     }
     if (message.sender.toString() !== userId.toString()) {
       return res.status(401).json({ message: 'Not authorized to edit' });
+    }
+    
+    if (message.imageUrl) {
+      return res.status(400).json({ message: 'Cannot edit messages with images' });
     }
 
     const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
