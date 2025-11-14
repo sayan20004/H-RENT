@@ -181,7 +181,7 @@ exports.reactToMessage = async (req, res) => {
   try {
     const message = await Message.findById(messageId);
     if (!message) {
-      return res.status(404).json({ message: 'Message not found' });
+      return res.status(4404).json({ message: 'Message not found' });
     }
 
     const existingReactionIndex = message.reactions.findIndex(
